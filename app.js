@@ -1,0 +1,90 @@
+const express = require('express');
+const pool = require('./db');
+
+const app = express();
+app.use(express.json());
+
+app.post('/students', async (req, res) => {
+  const { name, email, age } = req.body;
+  if (!name || !email || age === undefined) {
+    return res.status(400).json({ error: 'name, email and age are required' });
+  }
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO students (name, email, age) VALUES (?, ?, ?)',
+      [name, email, age]
+    );
+    console.log(`INSERT: student ${result.insertId} added (${name}, ${email}, ${age})`);
+    res.status(201).json({ id: result.insertId, name, email, age });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Email already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/students', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM students');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/students/:id', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM students WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/students/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT * FROM students WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      console.log(`UPDATE: student ${id} not found`);
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    const name = req.body.name ?? rows[0].name;
+    const email = req.body.email ?? rows[0].email;
+    const age = req.body.age ?? rows[0].age;
+    await pool.query(
+      'UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?',
+      [name, email, age, id]
+    );
+    console.log(`UPDATE: student ${id} updated (${name}, ${email}, ${age})`);
+    res.json({ id: Number(id), name, email, age });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Email already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/students/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await pool.query('DELETE FROM students WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      console.log(`DELETE: student ${id} not found`);
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    console.log(`DELETE: student ${id} deleted`);
+    res.json({ message: `Student ${id} deleted` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+process.on('SIGINT', async () => {
+  server.close();
+  await pool.end();
+  console.log('Database pool closed');
+  process.exit(0);
+});
