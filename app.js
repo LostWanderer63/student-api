@@ -80,7 +80,13 @@ app.delete('/students/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+const server = app.listen(PORT, (err) => {
+  if (err) {
+    console.error(`Failed to start server: ${err.message}`);
+    process.exit(1);
+  }
+  console.log(`Server running on http://localhost:${PORT}`);
+});
 
 process.on('SIGINT', async () => {
   server.close();
