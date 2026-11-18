@@ -61,4 +61,16 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// DELETE: remove a course with Model.destroy()
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await Course.destroy({ where: { id: req.params.id } });
+    if (deleted === 0) return res.status(404).json({ error: 'Course not found' });
+    console.log(`DELETE: course ${req.params.id} deleted`);
+    res.json({ message: `Course ${req.params.id} deleted` });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 module.exports = router;
