@@ -47,4 +47,18 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// UPDATE: modify an existing course with instance.update()
+router.put('/:id', async (req, res) => {
+  try {
+    const course = await Course.findByPk(req.params.id);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    const { title, code, credits } = req.body;
+    await course.update({ title, code, credits });
+    console.log(`UPDATE: course ${course.id} updated`);
+    res.json(course);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 module.exports = router;
