@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "sync": "node sync.js"
   },
   "author": "",
   "license": "ISC",
@@ -11,6 +12,7 @@
   "dependencies": {
     "dotenv": "^18.0.10",
     "express": "^5.3.0",
-    "mysql2": "^3.24.6"
+    "mysql2": "^3.24.6",
+    "sequelize": "^6.37.8"
   }
 }

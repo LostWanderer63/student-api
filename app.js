@@ -1,5 +1,7 @@
 const express = require('express');
 const pool = require('./db');
+const sequelize = require('./sequelize');
+require('./models/Course');
 
 const app = express();
 app.use(express.json());
@@ -80,17 +82,34 @@ app.delete('/students/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, (err) => {
-  if (err) {
-    console.error(`Failed to start server: ${err.message}`);
+let server;
+
+async function start() {
+  try {
+    await sequelize.authenticate();
+    console.log('Sequelize connected to MySQL');
+    await sequelize.sync();
+    console.log('Sequelize models synced');
+  } catch (err) {
+    console.error('Sequelize connection failed:', err.message);
     process.exit(1);
   }
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+
+  server = app.listen(PORT, (err) => {
+    if (err) {
+      console.error(`Failed to start server: ${err.message}`);
+      process.exit(1);
+    }
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+start();
 
 process.on('SIGINT', async () => {
-  server.close();
+  if (server) server.close();
   await pool.end();
-  console.log('Database pool closed');
+  await sequelize.close();
+  console.log('Database connections closed');
   process.exit(0);
 });
