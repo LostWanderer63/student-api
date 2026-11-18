@@ -1,11 +1,13 @@
 const express = require('express');
 const pool = require('./db');
-const sequelize = require('./sequelize');
+const { sequelize } = require('./models');
 const courseRoutes = require('./routes/courses');
+const enrollmentRoutes = require('./routes/enrollments');
 
 const app = express();
 app.use(express.json());
 app.use('/courses', courseRoutes);
+app.use(enrollmentRoutes);
 
 app.post('/students', async (req, res) => {
   const { name, email, age } = req.body;
