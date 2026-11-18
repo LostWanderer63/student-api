@@ -26,4 +26,25 @@ router.post('/', async (req, res) => {
   }
 });
 
+// READ: list all courses with Model.findAll()
+router.get('/', async (req, res) => {
+  try {
+    const courses = await Course.findAll({ order: [['id', 'ASC']] });
+    res.json(courses);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// READ: get one course by primary key with Model.findByPk()
+router.get('/:id', async (req, res) => {
+  try {
+    const course = await Course.findByPk(req.params.id);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.json(course);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 module.exports = router;
